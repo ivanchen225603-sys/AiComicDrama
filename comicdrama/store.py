@@ -461,6 +461,12 @@ def _history_of(value: Any) -> list[Any]:
     return list(value) if isinstance(value, list) else []
 
 
+# 库结构版本，写在 SQLite 的 `PRAGMA user_version` 里。
+# 1 = 引入版本号之前、靠 `_migrate` 逐列补齐的结构；2 = 引入版本号。
+# 以后改结构：在 `_migrate` 里加无损、可重复执行的升级步骤，再把这个数字加一。
+SCHEMA_VERSION = 2
+
+
 class DramaStore:
     """同步 SQLite 访问层；线程安全由本层的 RLock 保证。"""
 
@@ -493,13 +499,28 @@ class DramaStore:
         with self._lock:
             return int(self.db.execute(sql, params).rowcount or 0)
 
-    def install(self) -> None:
+    def schema_version(self) -> int:
+        """库文件记录的结构版本（SQLite `PRAGMA user_version`，0 = 引入版本号之前的库）。"""
         with self._lock:
+            return int(self.db.execute("PRAGMA user_version").fetchone()[0])
+
+    def install(self) -> None:
+        """建表并把库升级到 `SCHEMA_VERSION`。重复调用无副作用，失败整体回滚。"""
+        with self._lock:
+            found = self.schema_version()
+            if found > SCHEMA_VERSION:
+                # 新版本程序写过的库，旧程序不认识它的结构：拒绝启动，而不是边跑边写坏数据。
+                raise RuntimeError(
+                    f"{self.path} 的结构版本是 {found}，高于本程序支持的 {SCHEMA_VERSION}，"
+                    "请升级程序后再启动"
+                )
             self.db.execute("BEGIN IMMEDIATE")
             try:
                 for statement in _SCHEMA:
                     self.db.execute(statement)
                 self._migrate()
+                if found != SCHEMA_VERSION:
+                    self.db.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
                 self.db.execute("COMMIT")
             except Exception:
                 self.db.execute("ROLLBACK")

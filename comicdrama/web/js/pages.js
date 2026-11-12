@@ -164,7 +164,7 @@
     }).join("") + '</div>');
     var film = filmUrlOf(p);
     if(film){
-      h += card("最新成片", '<div class="player"><video src="' + A.esc(A.frameUrl(film)) + '" controls preload="metadata"></video></div>',
+      h += card("最新成片", A.filmPlayer(film, p),
         '<button class="btn sm" data-act="download-film">' + A.icon("download") + '下载</button>'
         + '<button class="btn sm primary" data-act="nav" data-page="qa">审片与导出</button>');
     }
@@ -377,7 +377,7 @@
     var s = A.shotById(p, A.DB.ui.selectedShot) || p.shots[0];
     if(s){
       var idx = p.shots.indexOf(s);
-      var media = s.videoUrl ? A.mediaTile(s.videoUrl, "video", (idx + 1) * 7, 300, 220, "")
+      var media = s.videoUrl ? A.mediaTile(s.videoUrl, "video", (idx + 1) * 7, 300, 220, "", undefined, s.imageUrl)
         : A.mediaTile(s.imageUrl || "", "image", (idx + 1) * 7, 300, 220, "");
       h += '<div class="split-wide"><div class="card"><div class="card-head"><h2>镜头 ' + (idx + 1) + '</h2>'
         + '<div class="btnbar tight"><button class="btn sm" data-act="insert-shot-before" data-id="' + A.esc(s.id) + '">在前面插入</button>'
@@ -436,7 +436,7 @@
       var busyShot = A.isBusy(p.id, "shot", s.id);
       var st = busyShot ? "running" : (s.videoUrl ? "succeeded" : (t ? t.state : s.state));
       h += '<div class="asset">'
-        + (s.videoUrl ? A.mediaTile(s.videoUrl, "video", (i + 1) * 7 + 2, 300, 168, "")
+        + (s.videoUrl ? A.mediaTile(s.videoUrl, "video", (i + 1) * 7 + 2, 300, 168, "", undefined, s.imageUrl)
            : A.mediaTile(s.imageUrl || "", "image", (i + 1) * 7 + 2, 300, 168, ""))
         + '<div class="meta"><div class="title"><b>镜头 ' + (i + 1) + '</b>' + A.pill(st) + '</div>'
         + '<small>' + A.esc(s.size) + ' · ' + s.dur + 's · ' + A.esc(s.desc.slice(0, 22)) + '</small>';
@@ -484,9 +484,10 @@
         h += '<div class="hist"><div class="hist-label">历史产物</div><div class="hist-row">';
         shown.forEach(function(entry, k){
           var inUse = !!entry.url && (entry.url === s.videoUrl || entry.url === s.imageUrl);
+          var useTag = entry.url === s.videoUrl ? "当前视频" : "当前关键帧";
           h += '<div class="hist-item' + (inUse ? ' picked' : '') + '">'
             + A.mediaTile(entry.url, entry.kind, k + 5, 72, 40, "")
-            + (inUse ? '<span class="hist-tag">当前</span>'
+            + (inUse ? '<span class="hist-tag">' + useTag + '</span>'
                      : '<button class="btn sm ghost hist-btn" data-act="restore-media" data-id="' + A.esc(s.id)
                        + '" data-url="' + A.esc(entry.url) + '">用这张</button>')
             + '</div>';
@@ -508,7 +509,7 @@
     h += '</div><div class="gap16"></div>';
     var film = filmUrlOf(p);
     h += card("成片", film
-        ? '<div class="player"><video src="' + A.esc(A.frameUrl(film)) + '" controls preload="metadata"></video></div>'
+        ? A.filmPlayer(film, p)
         : '<div class="hint">所有镜头生成视频后即可合成成片。</div>',
       A.genBtn("合成成片", "preview-film", "", "sm primary")
       + '<button class="btn sm" data-act="download-film">' + A.icon("download") + '下载</button>');
@@ -577,7 +578,7 @@
       h += '<div class="banner"><div><b>成片已过期</b>：合成之后内容有改动，请重新合成。</div></div>';
     }
     if(film){
-      h += card("成片预览", '<div class="player"><video src="' + A.esc(A.frameUrl(film)) + '" controls preload="metadata"></video></div>',
+      h += card("成片预览", A.filmPlayer(film, p),
         '<button class="btn sm" data-act="download-film">' + A.icon("download") + '下载</button>'
         + '<button class="btn sm primary" data-act="nav" data-page="qa">审片与导出</button>');
     }
@@ -635,7 +636,7 @@
     var film = filmUrlOf(p);
     h += '<div class="split-wide"><div>';
     if(film){
-      h += card("成片", '<div class="player"><video src="' + A.esc(A.frameUrl(film)) + '" controls preload="metadata"></video></div>');
+      h += card("成片", A.filmPlayer(film, p));
     }
     h += card("导出记录（" + p.exports.length + "）", !p.exports.length ? A.empty('还没有导出记录。', "film")
       : table('<th>时间</th><th>名称</th><th>规格</th><th class="num">镜头</th><th class="num">时长</th><th>AI 标识</th><th></th>',

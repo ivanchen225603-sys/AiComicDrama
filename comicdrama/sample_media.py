@@ -152,6 +152,17 @@ def _clamp(value: int, low: int, high: int, field: str) -> int:
     return number
 
 
+# 示例画面配色（天空、地面、强调色），按 key 轮换。全部是 6 位十六进制 RGB。
+_PALETTES: tuple[tuple[str, str, str], ...] = (
+    ("1d3557", "0f1b2d", "f4a261"),  # 雨夜港口
+    ("2b2d42", "14151f", "ef476f"),  # 霓虹街巷
+    ("3a506b", "1c2541", "5bc0be"),  # 清晨海面
+    ("5f0f40", "310e24", "fb8b24"),  # 黄昏
+    ("264653", "1b3139", "e9c46a"),  # 森林
+    ("4a4e69", "22223b", "c9ada7"),  # 室内暖光
+)
+
+
 def sample_image_bytes(
     key: str,
     *,
@@ -159,29 +170,59 @@ def sample_image_bytes(
     height: int = 1280,
     caption: str = "",
 ) -> bytes:
-    """生成一张带画面内标识的示例 PNG。颜色、色块、文字全部由 key 决定。"""
+    """生成一张带画面内标识的示例 PNG。配色、构图、文字全部由 key 决定。
+
+    缩略图会按中间区域裁切竖屏画面，所以关键内容（标识与说明）放在画面正中，
+    上下两端只放氛围色块。
+    """
     binary = _ffmpeg()
     font = _font()
     w = _clamp(width, 64, 1920, "width")
     h = _clamp(height, 64, 1920, "height")
     seed = _seed_of(key)
-    # 必须是两位十六进制：ffmpeg 的 0xRRGGBB 不接受第三位，溢出会拼出
-    # `0x1072a4a` 这种 7 位颜色串，让部分 key 偶发合成失败。
-    channel = 0x10 + (seed % 0x30)
-    band = max(36, min(96, h // 10))
+    sky, ground, accent = _PALETTES[seed % len(_PALETTES)]
+    # 色块位置与亮度随 key 变化，同一配色的不同镜头也能一眼区分。
+    shade = 0x18 + (seed // len(_PALETTES)) % 0x40
+    accent_x = (seed // 7) % 55 + 8
+    big = max(10, min(w, h) // 16)
+    small = max(8, big * 3 // 4)
+    per_line = max(4, int(w * 0.84) // big)
+    # 画面里只写镜头内容本身；「；画风：…；画幅：…」是给模型的附加要求，不必印进示例图。
+    caption_text = re.split(r"；(?:画风|画幅)：", str(caption or ""))[0][:60]
+    lines = [caption_text[i : i + per_line] for i in range(0, len(caption_text), per_line)][:2]
+    # 说明卡片按行数定高，放在略高于正中的位置，避开视频播放条；
+    # 每行单独 drawtext，避免字体自带的超大行距。
+    pad = big // 2
+    step = big * 7 // 5
+    card_h = pad * 2 + small * 8 // 5 + step * len(lines)
+    card_y = max(0, h * 11 // 25 - card_h // 2)
     with tempfile.TemporaryDirectory() as tmp:
         folder = Path(tmp)
         (folder / "font.ttf").write_bytes(font)
         (folder / "badge.txt").write_text(SAMPLE_LABEL, encoding="utf-8")
-        (folder / "caption.txt").write_text(str(caption or "")[:60], encoding="utf-8")
+        text_filters = []
+        for index, line in enumerate(lines):
+            (folder / f"line{index}.txt").write_text(line, encoding="utf-8")
+            y = card_y + pad + small * 8 // 5 + step * index
+            text_filters.append(
+                f"drawtext=fontfile=font.ttf:textfile=line{index}.txt:fontcolor=white:"
+                f"fontsize={big}:x=(w-text_w)/2:y={y}"
+            )
         out = folder / "sample.png"
-        draw = (
-            f"drawbox=x=0:y=0:w=iw:h={band}:color=0x8a1f2d@0.92:t=fill,"
-            "drawtext=fontfile=font.ttf:textfile=badge.txt:fontcolor=white:"
-            f"fontsize={max(14, band // 2)}:x=18:y=8,"
-            "drawtext=fontfile=font.ttf:textfile=caption.txt:fontcolor=0xffe9c9:"
-            f"fontsize={max(12, band // 3)}:x=18:y={band + 18},"
-            f"drawbox=x=0:y=ih-{band}:w=iw:h={band}:color=0x061426@0.75:t=fill"
+        draw = ",".join(
+            [
+                # 远景：地平线以下换色，上方一块随 key 偏移的强调色块（像远处的灯或窗）
+                f"drawbox=x=0:y=ih*0.62:w=iw:h=ih*0.38:color=0x{ground}@0.95:t=fill",
+                f"drawbox=x=0:y=ih*0.615:w=iw:h=ih*0.008:color=0x{accent}@0.85:t=fill",
+                f"drawbox=x=iw*{accent_x}/100:y=ih*0.10:w=iw*0.26:h=ih*0.16:"
+                f"color=0x{accent}@0.70:t=fill",
+                f"drawbox=x=0:y=0:w=iw:h=ih:color=0x{shade:02x}{shade:02x}{shade:02x}@0.08:t=fill",
+                # 正中的说明卡片：缩略图裁切后仍然可见
+                f"drawbox=x=iw*0.04:y={card_y}:w=iw*0.92:h={card_h}:color=0x0b1020@0.72:t=fill",
+                "drawtext=fontfile=font.ttf:textfile=badge.txt:fontcolor=0xffd28a:"
+                f"fontsize={small}:x=(w-text_w)/2:y={card_y + pad}",
+                *text_filters,
+            ]
         )
         _run(
             [
@@ -192,7 +233,7 @@ def sample_image_bytes(
                 "-f",
                 "lavfi",
                 "-i",
-                f"color=c=0x{channel:02x}2a4a:s={w}x{h}:r=25:d=1",
+                f"color=c=0x{sky}:s={w}x{h}:r=25:d=1",
                 "-vf",
                 draw,
                 "-frames:v",

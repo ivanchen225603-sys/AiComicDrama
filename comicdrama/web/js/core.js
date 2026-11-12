@@ -520,7 +520,8 @@ App.isAdmin = function(){
 App.uploadBadge = function(){
   return '<span class="badge b-p2 xs">上传</span>';
 };
-App.mediaTile = function(url, kind, seed, w, h, cap, badge){
+/* poster：视频的封面图（通常是该镜头的关键帧），没有时浏览器显示第一帧。 */
+App.mediaTile = function(url, kind, seed, w, h, cap, badge, poster){
   if(url){
     /* 上传素材既不是模型产物也不是离线示例，可由调用方传中性角标覆盖。 */
     /* badge 显式传 "" 表示不要角标（如项目封面、上传缩略图）。 */
@@ -529,6 +530,7 @@ App.mediaTile = function(url, kind, seed, w, h, cap, badge){
       ? '<div class="cap">' + (cap ? '<span>' + App.esc(cap) + '</span>' : '') + mark + '</div>' : '';
     if(kind === "video"){
       return '<div class="thumb" data-h="'+h+'"><video src="'+App.esc(App.frameUrl(url))+'" '
+        + (poster ? 'poster="'+App.esc(poster)+'" ' : '')
         + 'controls preload="metadata" class="fill"></video>'
         + label + '</div>';
     }
@@ -537,6 +539,14 @@ App.mediaTile = function(url, kind, seed, w, h, cap, badge){
       + label + '</div>';
   }
   return App.art(seed, w, h, cap);
+};
+
+/* 成片播放器：用第一个有关键帧的镜头做封面，播放前不是一块黑屏。 */
+App.filmPlayer = function(film, p){
+  var first = p && (p.shots || []).filter(function(s){ return s.imageUrl; })[0];
+  return '<div class="player"><video src="' + App.esc(App.frameUrl(film)) + '" '
+    + (first ? 'poster="' + App.esc(first.imageUrl) + '" ' : '')
+    + 'controls preload="metadata"></video></div>';
 };
 
 /* 视频地址加 #t=0.1，浏览器会把第一帧当封面，而不是显示一块灰色。 */
