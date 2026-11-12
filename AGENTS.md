@@ -31,7 +31,3 @@ Use four-space indentation, `snake_case` functions, and `PascalCase` classes in 
 ## Commits and Pull Requests
 
 Follow the short, prefixed subjects in the Git history, such as `feat:` and `chore:`. Describe the behavior change and checks run in your PR. Link a related issue when available and include screenshots for visible UI changes.
-
-## Agent Instructions
-
-Use `$simplify` only on explicit request for simplification or a reuse, quality, or efficiency review. Read its `SKILL.md`. Make one pass over current-task code, including new files. Apply high-confidence changes that preserve behavior, public interfaces, and unrelated edits. For review-only requests, report findings without editing. Skip the pass when requested or when no code changed. Inspect the final diff, run relevant checks, and report changes, skipped checks, or an unavailable skill.
