@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools==84.1.0", "wheel==0.48.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-comic-drama"
+version = "0.1.0"
+description = "AI comic-drama studio: from a one-line idea to a finished short film"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi==0.135.4", "uvicorn==0.42.0", "pydantic==2.13.5", "pydantic-settings==2.14.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==9.0.3", "pytest-asyncio==1.3.0", "pytest-cov==7.0.0",
+       "httpx==0.28.1", "ruff==0.15.6", "mypy==1.19.1", "build==1.4.0"]
+
+[project.scripts]
+comic-drama = "comicdrama.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["comicdrama*"]
+
+[tool.setuptools.package-data]
+comicdrama = ["web/*", "web/**/*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+  "error::RuntimeWarning",
+  "error::pytest.PytestUnraisableExceptionWarning",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+check_untyped_defs = true
+files = ["comicdrama"]
+
+[tool.pydantic-mypy]
+init_typed = false

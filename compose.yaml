@@ -1,0 +1,30 @@
+# 一键启动：docker compose up -d --build，然后浏览器打开 http://127.0.0.1:8001/
+# 首次进入先注册账号；在「模型设置」里填写自己的 Liblib 密钥即可生成真实画面。
+services:
+  comic-drama:
+    build: .
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      COMIC_HOST: 0.0.0.0
+      # 容器里访客不是本机地址，每个人都要登录自己的账号。
+      COMIC_REQUIRE_LOGIN: "true"
+      COMIC_DATA_DIR: /state
+      # 用域名对外提供服务时填写，例如 '["drama.example.com"]'。
+      COMIC_ALLOWED_HOSTS: '${COMIC_ALLOWED_HOSTS:-[]}'
+      # 视频生成需要：Liblib 从这个 https 地址拉取首帧图片。
+      COMIC_DRAMA_PUBLIC_BASE_URL: '${COMIC_DRAMA_PUBLIC_BASE_URL:-}'
+    volumes:
+      - comic_state:/state
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
+    cpus: 2.0
+    restart: unless-stopped
+volumes:
+  comic_state:

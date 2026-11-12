@@ -1,0 +1,24 @@
+# 虚拟环境与缓存
+.venv*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage*
+htmlcov/
+node_modules/
+
+# 运行时数据与密钥
+.runtime*/
+.env
+.env.*
+!.env.example
+*.sqlite*
+*.db
+*.pem
+*.key
+*.log
