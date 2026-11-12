@@ -86,6 +86,7 @@ async def settle_one(service: DramaService) -> dict[str, Any]:
 # ---------------------------------------------------------------- 7. 四张候选
 
 
+@pytest.mark.needs_ffmpeg
 async def test_four_candidates_charge_four_images(service: DramaService) -> None:
     """candidates=4：预占 144、成本 120，结算后余额 860，产出 4 张互不相同的图。
 
@@ -118,6 +119,7 @@ async def test_four_candidates_charge_four_images(service: DramaService) -> None
 # ---------------------------------------------------------------- 8. 默认一张
 
 
+@pytest.mark.needs_ffmpeg
 async def test_default_candidates_keeps_the_old_single_image_behaviour(
     service: DramaService,
 ) -> None:
@@ -175,6 +177,7 @@ async def test_illegal_candidate_counts_are_clamped_not_rejected(
 # ---------------------------------------------------------------- 10. 选帧生效
 
 
+@pytest.mark.needs_ffmpeg
 async def test_pick_frame_really_changes_the_shot_image(service: DramaService) -> None:
     """选第 3 张：task.picked=2 且**镜头用的图跟着换**（这是以前不生效的那条）。"""
     ids = await shots(service, 3)
@@ -212,6 +215,7 @@ async def test_pick_frame_really_changes_the_shot_image(service: DramaService) -
 # ---------------------------------------------------------------- 11. 历史与回退
 
 
+@pytest.mark.needs_ffmpeg
 async def test_media_history_records_each_video_and_restore_is_undoable(
     service: DramaService,
 ) -> None:
@@ -253,6 +257,7 @@ async def test_media_history_records_each_video_and_restore_is_undoable(
 # ---------------------------------------------------------------- 12. 历史上限
 
 
+@pytest.mark.needs_ffmpeg
 async def test_media_history_keeps_only_the_latest_ten(service: DramaService) -> None:
     """超过 10 条只留最新 10 条，最新在前。"""
     shot_id = (await shots(service, 1))[0]
@@ -277,6 +282,7 @@ async def test_media_history_keeps_only_the_latest_ten(service: DramaService) ->
 # ---------------------------------------------------------------- 13. 存档往返
 
 
+@pytest.mark.needs_ffmpeg
 async def test_export_import_round_trips_media_history(service: DramaService) -> None:
     """导入导出必须带着产物历史往返，且非法条目整份拒绝（不是静默丢弃）。
 

@@ -49,6 +49,7 @@ async def first_shot(service: DramaService) -> str:
     return proj["shots"][0]["id"]
 
 
+@pytest.mark.needs_ffmpeg
 async def test_unset_limits_fall_back_to_the_whole_balance(service: DramaService):
     state = await service.state("local")
     v = view(state)
@@ -76,6 +77,7 @@ async def test_single_limit_compares_the_unit_price(service: DramaService):
     )
 
 
+@pytest.mark.needs_ffmpeg
 async def test_total_limit_counts_settled_spend_and_blocks_the_overflow(service: DramaService):
     await limits(service, total=500)
     shot = await first_shot(service)
@@ -86,6 +88,7 @@ async def test_total_limit_counts_settled_spend_and_blocks_the_overflow(service:
     assert await refused(service, "image-to-video", shot) == "credit_total_limit"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_total_limit_above_the_balance_is_capped_by_the_balance(service: DramaService):
     await limits(service, total=1_000_000)
     state = await service.state("local")
@@ -110,6 +113,7 @@ async def test_changes_take_effect_on_the_very_next_request(service: DramaServic
     assert await refused(service, "script-doctor") == "credit_single_limit"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_editing_the_value_keeps_used_and_only_reset_clears_it(service: DramaService):
     await limits(service, total=1000)
     await act(service, "image-to-video", await first_shot(service))
@@ -134,6 +138,7 @@ async def test_invalid_values_are_rejected_without_changing_settings(service: Dr
     assert (await service.state("local"))["creditLimits"]["total"] == 500
 
 
+@pytest.mark.needs_ffmpeg
 async def test_keyframe_batch_respects_the_total_and_settles_into_used(service: DramaService):
     state = await service.state("local")
     proj = next(p for p in state["projects"] if p["id"] == state["activeProjectId"])
@@ -317,6 +322,7 @@ def new_service(tmp_path: Path, provider: MockDramaProvider | None = None) -> Dr
     return svc
 
 
+@pytest.mark.needs_ffmpeg
 async def test_same_request_id_replays_without_a_second_charge_or_spend(
     service: DramaService,
 ):
@@ -360,6 +366,7 @@ async def test_retry_task_is_blocked_by_the_single_limit_without_touching_the_le
     assert funds(after) == funds(before), "被拒时账本零变动"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_reroll_task_is_blocked_by_the_single_limit_without_touching_the_ledger(
     service: DramaService,
 ):

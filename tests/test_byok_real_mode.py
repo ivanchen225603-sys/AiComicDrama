@@ -93,6 +93,7 @@ async def test_public_route_serves_without_login(tmp_path: Path):
 # ---------------- 首帧来源 ----------------
 
 
+@pytest.mark.needs_ffmpeg
 async def test_first_frame_prefers_the_shots_own_keyframe(service: DramaService):
     state = await service.state("local")
     shot = proj(state)["shots"][1]  # 引用了 @角色:林砚
@@ -109,6 +110,7 @@ async def test_first_frame_prefers_the_shots_own_keyframe(service: DramaService)
     assert item["first_frame_bytes"] > 0
 
 
+@pytest.mark.needs_ffmpeg
 async def test_shot_without_images_still_gets_a_video_offline(service: DramaService):
     state = await service.state("local")
     shot = proj(state)["shots"][0]
@@ -154,6 +156,7 @@ def test_compose_trims_each_clip_to_its_shot_duration(tmp_path: Path, monkeypatc
 # ---------------- 自带密钥：不扣平台积分、不受平台每日上限 ----------------
 
 
+@pytest.mark.needs_ffmpeg
 async def test_byok_generation_costs_no_platform_credits(
     service: DramaService, monkeypatch: pytest.MonkeyPatch
 ):
@@ -185,6 +188,7 @@ async def test_without_byok_prices_are_unchanged(service: DramaService):
 # ---------------- 切到真实模式：不混入示例素材 ----------------
 
 
+@pytest.mark.needs_ffmpeg
 async def test_drop_sample_media_clears_samples_but_keeps_uploads(
     service: DramaService, monkeypatch: pytest.MonkeyPatch
 ):
@@ -216,6 +220,7 @@ async def test_drop_sample_media_clears_samples_but_keeps_uploads(
     assert (await act(service, "submitTasks", [shot["id"]]))["result"] == 1
 
 
+@pytest.mark.needs_ffmpeg
 async def test_first_save_of_liblib_keys_drops_samples_over_http(tmp_path: Path):
     import httpx
 

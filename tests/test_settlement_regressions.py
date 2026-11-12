@@ -295,6 +295,7 @@ async def lock_one_shot(service: DramaService, pid: str) -> str:
     return shot_id
 
 
+@pytest.mark.needs_ffmpeg
 async def test_deleting_a_project_keeps_the_ledger_invariant(made):
     """反例：删项目曾连带删掉已结算任务，导致守恒永久 409。"""
     service, _ = made
@@ -404,6 +405,7 @@ async def test_export_film_rejects_an_empty_timeline(made):
     assert exc.value.code == "empty_film"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_export_film_requires_a_real_film_once_provider_is_remote(made_big):
     """接真实 Provider 后，没有合成成片就不允许产出「导出成功」记录。"""
     service, _ = made_big
@@ -529,6 +531,7 @@ async def test_different_owners_do_not_block_each_other(tmp_path):
 
 
 # ---------------------------------------------------------------- 回写
+@pytest.mark.needs_ffmpeg
 async def test_candidate_image_is_written_back_to_the_asset(made):
     """反例：候选图只进 media 列表，资产卡永远是 SVG 占位。"""
     service, _ = made
@@ -539,6 +542,7 @@ async def test_candidate_image_is_written_back_to_the_asset(made):
     assert asset["imageUrl"].startswith("/api/v1/drama/assets/")
 
 
+@pytest.mark.needs_ffmpeg
 async def test_video_is_written_back_to_the_shot(made):
     """反例：image-to-video 的 video_url 写进 shot 后读不回来（列不存在）。"""
     service, provider = made
@@ -552,6 +556,7 @@ async def test_video_is_written_back_to_the_shot(made):
     assert next(s for s in reloaded["shots"] if s["id"] == shot_id)["videoUrl"] == shot["videoUrl"]
 
 
+@pytest.mark.needs_ffmpeg
 async def test_first_frame_bytes_reach_the_provider(made):
     """首帧图要真的读到字节，而不是只传一个 id。"""
     service, provider = made
@@ -612,6 +617,7 @@ async def test_cancel_task_refunds_the_reserve(made):
     assert [t["kind"] for t in after["tx"]][-1] == "release"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_cancel_rejects_a_settled_task(made):
     """已结算的任务取消会把已经花掉的钱退回来，必须拒绝。"""
     service, _ = made
@@ -644,6 +650,7 @@ async def test_cancelled_shot_can_be_submitted_again(made):
     assert again["state"]["tasks"][-1]["state"] == "queued"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_autopump_advances_tasks_without_any_tick(tmp_path):
     """P2-13 核心：任务推进不再依赖客户端反复调 tick。"""
     service = DramaService(

@@ -494,6 +494,7 @@ async def _compose_all(service: DramaService, pid: str) -> dict[str, Any]:
     return (await act(service, "preview-film", project_id=pid))["state"]
 
 
+@pytest.mark.needs_ffmpeg
 async def test_resplit_refuses_to_silently_discard_generated_media(service: DramaService):
     """未锁定镜头已有生成素材时，换一版分镜必须显式确认；拒绝时不扣费。"""
     state = await service.state("local")
@@ -552,6 +553,7 @@ async def test_new_shot_after_resplit_can_still_get_a_keyframe(service: DramaSer
     assert (await act(service, "submitTasks", [fresh["id"]], project_id=pid))["result"] == 1
 
 
+@pytest.mark.needs_ffmpeg
 async def test_export_is_refused_once_the_film_no_longer_matches_the_project(
     service: DramaService,
 ):
@@ -585,6 +587,7 @@ async def test_export_is_refused_once_the_film_no_longer_matches_the_project(
     assert record["duration"] == sum(int(s["dur"]) for s in project_of(state)["shots"])
 
 
+@pytest.mark.needs_ffmpeg
 async def test_film_goes_stale_when_the_storyboard_is_replaced(service: DramaService):
     """原始复现：8 镜成片 → 换一版分镜 → 导出不能再指向旧文件。"""
     # 这条用例要把 8 个镜头出两遍（旧分镜 + 新分镜）：16 × 300 = 4800 > 默认预算
@@ -612,6 +615,7 @@ async def test_film_goes_stale_when_the_storyboard_is_replaced(service: DramaSer
     assert caught.value.code == "film_stale"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_export_is_refused_while_some_shots_have_no_video(service: DramaService):
     """合成会跳过没有视频轨的镜头；这样的成片不完整，不能产出导出记录。"""
     state = await service.state("local")

@@ -2,6 +2,8 @@
 
 [中文](README.md) | English
 
+[![CI](https://github.com/ivanchen225603-sys/AiComicDrama/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanchen225603-sys/AiComicDrama/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.11%E2%80%933.13-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+
 An AI comic-drama studio that takes a one-line idea all the way to a finished, downloadable short film: script, characters, storyboard, images and video, voice-over and subtitles, editing and export.
 
 ![AI comic-drama studio demo](screenshots/demo.gif)
@@ -69,6 +71,14 @@ Open <http://127.0.0.1:8001/> (no sign-in needed from the local machine) and <ht
 | `COMIC_CREDIT_ADMINS='["account_id"]'` | Accounts allowed to grant credits and resolve held charges |
 
 See [.env.example](.env.example) for every option.
+
+## Quality checks
+
+Every push runs [GitHub Actions](.github/workflows/ci.yml) on Linux: ruff lint and format, mypy, Python tests (coverage at least 85%, including real FFmpeg composition), frontend tests, and a Docker build-and-start check. Run everything locally:
+
+```bash
+python -m ruff check . && python -m ruff format --check . && python -m mypy \n  && python -m pytest --cov=comicdrama --cov-fail-under=85 && node --test tests/test_ui_state.mjs
+```
 
 ## Development
 

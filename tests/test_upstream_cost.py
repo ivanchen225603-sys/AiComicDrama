@@ -70,6 +70,7 @@ def _drama(state: dict[str, Any]) -> dict[str, Any]:
 # ---------------------------------------------------------------- 1. mock：全链路 NULL
 
 
+@pytest.mark.needs_ffmpeg
 async def test_mock_records_no_upstream_cost_anywhere(tmp_path: Path) -> None:
     """mock 不花上游钱，两列必须全是 NULL（不是 0），报表把笔数记为「未知」。"""
     service = _service(tmp_path)

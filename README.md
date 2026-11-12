@@ -2,6 +2,8 @@
 
 中文 | [English](README.en.md)
 
+[![CI](https://github.com/ivanchen225603-sys/AiComicDrama/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanchen225603-sys/AiComicDrama/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.11%E2%80%933.13-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+
 从一句话创意到可下载成片的 AI 漫剧创作工作台：写剧本、定角色、拆分镜、生成画面与视频、配音字幕、剪辑导出，一站完成。
 
 ![AI 漫剧工作台演示](screenshots/demo.gif)
@@ -86,6 +88,14 @@ comicdrama/
   compose.py        FFmpeg 成片合成
   web/              前端页面（原生 JavaScript，无构建步骤）
 tests/              Python 与前端测试
+```
+
+## 质量检查
+
+每次提交由 [GitHub Actions](.github/workflows/ci.yml) 在 Linux 上自动运行：ruff 代码检查与格式检查、mypy 类型检查、Python 测试（覆盖率不低于 85%，含真实 FFmpeg 成片合成）、前端测试，以及 Docker 镜像构建与启动检查。本地一次跑完：
+
+```bash
+python -m ruff check . && python -m ruff format --check . && python -m mypy \n  && python -m pytest --cov=comicdrama --cov-fail-under=85 && node --test tests/test_ui_state.mjs
 ```
 
 ## 开发

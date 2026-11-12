@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # 成片合成与硬字幕测试需要真实 FFmpeg 和中文字体，缺了这些用例会被跳过。
+      - name: Install FFmpeg and CJK fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-noto-cjk
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements-dev.lock
+          python -m pip install --no-deps -e .
+
+      - name: Lint
+        run: python -m ruff check .
+
+      - name: Format
+        run: python -m ruff format --check .
+
+      - name: Type check
+        run: python -m mypy
+
+      - name: Python tests with coverage
+        run: python -m pytest --cov=comicdrama --cov-report=term --cov-fail-under=85
+
+      - name: Frontend tests
+        run: node --test tests/test_ui_state.mjs
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t ai-comic-drama:ci .
+
+      - name: Start container and check it serves the app
+        run: |
+          docker run -d --name app -p 127.0.0.1:8001:8001 \
+            -e COMIC_HOST=0.0.0.0 -e COMIC_REQUIRE_LOGIN=true -e COMIC_DATA_DIR=/state \
+            ai-comic-drama:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8001/health/live && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8001/ | grep -q "<html"
+          # 容器里要求登录：未登录访问业务接口必须返回 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8001/api/v1/drama/config)" = "401"
+          docker exec app ffmpeg -version | head -1
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs app || true

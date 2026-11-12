@@ -271,6 +271,7 @@ async def test_local_config_failure_rolls_back_and_keeps_action_usable(tmp_path,
 
 
 # ---------------------------------------------------------------- 残留 2
+@pytest.mark.needs_ffmpeg
 async def test_reroll_respects_project_budget(tmp_path):
     """修复前：预算 40 的项目重抽 6 次全部通过，实际花到 70。"""
     service = make(tmp_path, MockDramaProvider())
@@ -290,6 +291,7 @@ async def test_reroll_respects_project_budget(tmp_path):
         await service.close()
 
 
+@pytest.mark.needs_ffmpeg
 async def test_reroll_respects_daily_cap(tmp_path, billed):
     """修复前：单日上限 60 时重抽 10 次全部通过，当天关键帧花到 140。
 
@@ -316,6 +318,7 @@ async def test_reroll_respects_daily_cap(tmp_path, billed):
         await service.close()
 
 
+@pytest.mark.needs_ffmpeg
 async def test_daily_spend_counts_settled_keyframe_tasks(tmp_path, billed):
     """修复前：今日已用只看 drama_charge，关键帧花了 140 仍显示 0。
 
@@ -338,6 +341,7 @@ async def test_daily_spend_counts_settled_keyframe_tasks(tmp_path, billed):
         await service.close()
 
 
+@pytest.mark.needs_ffmpeg
 async def test_retry_respects_daily_cap(tmp_path, billed):
     """重试同样要过闸门（原来只看了余额）。
 
@@ -807,6 +811,7 @@ def assert_conservation(state: dict[str, Any]) -> None:
     assert 980 + credits - cost == state["ledger"]["balance"] + state["ledger"]["frozen"]
 
 
+@pytest.mark.needs_ffmpeg
 async def test_refreshed_request_id_cannot_resubmit_the_same_shot(tmp_path):
     """验收 1：同一镜头生成中，换 requestId 再提交 = 409；不同镜头不受影响。
 
@@ -856,6 +861,7 @@ async def test_refreshed_request_id_cannot_resubmit_the_same_shot(tmp_path):
         await service.close()
 
 
+@pytest.mark.needs_ffmpeg
 async def test_project_settings_and_character_refs_reach_the_provider(tmp_path):
     """验收 2：比例 / 画风 / 分辨率与 `@角色` 锚点图真的进了生成请求参数。
 
@@ -957,6 +963,7 @@ async def test_remote_keyframe_entries_share_one_provider_driven_settlement_path
         await service.close()
 
 
+@pytest.mark.needs_ffmpeg
 async def test_switching_provider_settles_legacy_unsettled_keyframe_tasks(tmp_path):
     """A3 验收 2：离线造已结算 / 失败 / 排队三种任务，再以真实 Provider 打开同一个库。
 

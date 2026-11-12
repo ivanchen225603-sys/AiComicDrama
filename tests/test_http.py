@@ -115,7 +115,7 @@ async def test_config_declares_mock_and_last_mile(client):
     assert config["provider"] == "mock"
     assert config["offline"] is True
     assert config["owner"] == "local"
-    # 第五项新增 BGM / 参考图上传与删除两个端点（raw body，不依赖 python-multipart）。
+    # 含 BGM / 参考图上传与删除两个端点（raw body，不依赖 python-multipart）。
     assert len(config["endpoints"]) == 10
     assert any("drama/assets/{asset_id}" in e for e in config["endpoints"])
     assert any("POST /api/v1/drama/uploads" in e for e in config["endpoints"])
@@ -128,7 +128,7 @@ async def test_config_declares_mock_and_last_mile(client):
     assert len(config["capabilities"]) == 10
     assert len(config["last_mile"]) == 7
     joined = " ".join(config["last_mile"])
-    for word in ("付费开通", "凭据", "JSON 输出", "暂无数据", "videos[]", "7 天"):
+    for word in ("模型设置", "模拟服务", "JSON 输出", "公网", "7 天", "画面审核"):
         assert word in joined, word
     # config 不得泄露任何真实凭据或暗示模型已接通
     assert not any(k in config for k in ("access_key", "secret_key", "api_key", "token"))
@@ -149,6 +149,7 @@ def test_remote_actions_match_server_branches():
 
 
 # ---------------------------------------------------------------- 完整业务链路
+@pytest.mark.needs_ffmpeg
 async def test_all_actions_reachable_in_one_pipeline(client):
     """按真实用户顺序走一条流水线，让 60 个动作在满足前置条件时全部返回 200。
 
@@ -411,6 +412,7 @@ async def test_reconcile_view_is_read_only(client):
     assert after == before, "对账视图不该改动账本"
 
 
+@pytest.mark.needs_ffmpeg
 async def test_autopump_settles_a_task_without_any_tick_call(tmp_path):
     """HTTP 层证明「服务端驱动」真的存在：一次 tick 都不调，任务自己跑完并结算。"""
     import asyncio

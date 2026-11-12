@@ -81,6 +81,7 @@ def today() -> str:
 # ---------------------------------------------------------------- 1. mock 不占额
 
 
+@pytest.mark.needs_ffmpeg
 async def test_mock_actions_do_not_count_against_daily_cap(mock_service: DramaService) -> None:
     """默认 500 下连续 3 次图生视频（名义 3×360=1080 > 500）必须全部成功。"""
     assert DEFAULT_DAILY_CAP == 500
@@ -99,6 +100,7 @@ async def test_mock_actions_do_not_count_against_daily_cap(mock_service: DramaSe
 # ---------------------------------------------------------------- 2. 真实照样被拦
 
 
+@pytest.mark.needs_ffmpeg
 async def test_real_provider_still_hits_daily_cap(tmp_path: Path, remote_named: None) -> None:
     """身份改成非 mock 后，第 2 次图生视频必须 409，且消息里带 500。"""
     service = DramaService(
@@ -123,6 +125,7 @@ async def test_real_provider_still_hits_daily_cap(tmp_path: Path, remote_named: 
 # ---------------------------------------------------------------- 3. 不占额 ≠ 不拦
 
 
+@pytest.mark.needs_ffmpeg
 async def test_mock_spend_does_not_shadow_real_calls(tmp_path: Path, monkeypatch) -> None:
     """同一库上先跑满若干笔离线动作，再切真实身份，第一次真实动作仍必须放行。
 
@@ -158,6 +161,7 @@ async def test_mock_spend_does_not_shadow_real_calls(tmp_path: Path, monkeypatch
 # ---------------------------------------------------------------- 4. 存档不能洗身份
 
 
+@pytest.mark.needs_ffmpeg
 async def test_mock_charge_stays_simulated_after_a_state_reload(tmp_path: Path) -> None:
     """mock 跑 1 笔 → 存档/重读 → 换新实例再跑 1 笔：`daily_spend` 仍须为 0。
 
@@ -260,6 +264,7 @@ def test_daily_spend_treats_unknown_source_as_real(tmp_path: Path) -> None:
     store.close()
 
 
+@pytest.mark.needs_ffmpeg
 async def test_charge_identity_is_provider_name_not_channel(
     tmp_path: Path, remote_named: None
 ) -> None:

@@ -118,6 +118,7 @@ async def tick_until_idle(service: DramaService) -> list[Any]:
 # ---------------------------------------------------------------- 1. 正常批量
 
 
+@pytest.mark.needs_ffmpeg
 async def test_batch_video_reserves_once_and_settles_per_shot(service: DramaService) -> None:
     """两镜 × 360 = 720 预占；逐镜结算后余额 380、冻结 0。
 
@@ -236,6 +237,7 @@ async def test_repeat_submit_marks_busy_without_a_second_reserve(service: DramaS
 # ---------------------------------------------------------------- 5. 单条失败
 
 
+@pytest.mark.needs_ffmpeg
 async def test_one_failed_video_releases_only_its_own_reserve(tmp_path: Path) -> None:
     """第一条视频明确失败：它的 360 全额退还，另一条的冻结不受影响，守恒成立。
 
@@ -271,6 +273,7 @@ async def test_one_failed_video_releases_only_its_own_reserve(tmp_path: Path) ->
 # ---------------------------------------------------------------- 6. 整批守恒
 
 
+@pytest.mark.needs_ffmpeg
 async def test_batch_conservation_and_no_surprise_ledger_kinds(service: DramaService) -> None:
     """整批结束后守恒成立，且只出现 reserve / settle / refund 三种流水。"""
     ids = await shots(service, 2)
