@@ -275,26 +275,23 @@ def test_burn_with_720p_applies_both_scale_and_subtitle(tmp_path: Path):
 
 
 # ---------------------------------------------------------------- 路径转义
+def test_subtitle_filter_escapes_windows_drive_colon():
+    srt = Path("C:/字幕 目录 with space/subs file.srt")
+    assert subtitle_filter(srt) == r"subtitles='C\:/字幕 目录 with space/subs file.srt'"
+
+
 @needs_ffmpeg
 @needs_probe
-def test_subtitle_filter_escapes_drive_colon_for_paths_with_spaces(tmp_path: Path):
-    """filtergraph 里 `:` 是分隔符：盘符冒号必须转义，含空格与中文的目录也要能烧。"""
+def test_burn_subtitles_from_path_with_spaces(tmp_path: Path):
+    """用本机临时路径验证含空格与中文的字幕文件能烧进画面。"""
     folder = tmp_path / "字幕 目录 with space"
     folder.mkdir()
     srt = _write_srt(folder / "subs file.srt")
 
-    expression = subtitle_filter(srt)
-    assert expression.startswith("subtitles='") and expression.endswith(".srt'")
-    # 盘符冒号转义成 `\:`，且除它之外不该再留裸冒号；路径本身不能带反斜杠。
-    assert expression.count("\\:") == 1
-    assert ":" not in expression.replace("\\:", "")
-    assert "\\" not in expression.replace("\\:", "")
-    assert "/" in expression and "with space" in expression
-
     base = _make_clip(tmp_path / "base.mp4", 320, 240)
     out = tmp_path / "spaced.mp4"
     args = _mux(base, out, srt, subtitle_mode="burn")
-    assert expression in args[args.index("-vf") + 1]
+    assert subtitle_filter(srt) in args[args.index("-vf") + 1]
     assert _frame_luma(out)["YMAX"] >= 200
 
 
